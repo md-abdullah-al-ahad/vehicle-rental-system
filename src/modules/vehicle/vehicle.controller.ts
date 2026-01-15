@@ -14,4 +14,18 @@ const addVehicle = async (req: Request, res: Response) => {
   }
 };
 
-export { addVehicle };
+const getAllVehicles = async (req: Request, res: Response) => {
+  try {
+    const vehicles = await vehicleService.getAllVehicles();
+    res.status(200).json({
+      success: true,
+      message: "Vehicles retrieved successfully",
+      data: vehicles,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export { addVehicle, getAllVehicles };
