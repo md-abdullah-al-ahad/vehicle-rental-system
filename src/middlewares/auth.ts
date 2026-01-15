@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import config from "../config";
 import jwt, { JwtPayload } from "jsonwebtoken";
-const auth = () => {
+const auth = (...roles: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const token = req.headers.authorization;
@@ -10,6 +10,9 @@ const auth = () => {
       }
       const decoded = jwt.verify(token, config.JWT_SECRET as string);
       req.user = decoded as JwtPayload;
+      if (roles.length && !roles.includes(req.user.role)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
       next();
     } catch (err: any) {
       res.status(500).json({
