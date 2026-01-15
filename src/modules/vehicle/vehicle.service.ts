@@ -26,4 +26,11 @@ const getAllVehicles = async () => {
   return result.rows;
 };
 
-export default { addVehicle, getAllVehicles };
+const getVehicleById = async (vehicleId: string) => {
+  const result = await pool.query("SELECT * FROM vehicles WHERE id = $1", [
+    vehicleId,
+  ]);
+  return result.rows[0];
+};
+
+export default { addVehicle, getAllVehicles, getVehicleById };
