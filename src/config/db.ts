@@ -14,8 +14,6 @@ export const initDB = async () => {
       password TEXT NOT NULL,
       phone VARCHAR(30) NOT NULL,
       role VARCHAR(20) NOT NULL DEFAULT 'customer',
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW(),
       CONSTRAINT users_email_lowercase CHECK (email = lower(email)),
       CONSTRAINT users_password_min_len CHECK (char_length(password) >= 6),
       CONSTRAINT users_role_check CHECK (role IN ('admin', 'customer'))
