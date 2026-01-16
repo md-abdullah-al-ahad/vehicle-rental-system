@@ -46,4 +46,39 @@ const getAllBookings = async () => {
   return bookings.rows;
 };
 
-export default { createBooking, getAllBookings };
+const updateBookingById = async (
+  bookingId: string,
+  status: string,
+  currentUser: any
+) => {
+  const result = await pool.query("SELECT * FROM bookings WHERE id = $1", [
+    bookingId,
+  ]);
+  if (result.rows.length === 0) {
+    return null;
+  }
+  if (currentUser.role === "admin") {
+    const updateResult = await pool.query(
+      "UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *",
+      [status, bookingId]
+    );
+    return updateResult.rows[0];
+  }
+  if (currentUser.role === "customer") {
+    const booking = result.rows[0];
+    if (booking.customer_id.toString() !== currentUser.userId.toString()) {
+      throw new Error("Unauthorized: You can only update your own bookings");
+    }
+    if (status !== "cancelled") {
+      throw new Error("Customers can only cancel bookings");
+    }
+    const updateResult = await pool.query(
+      "UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *",
+      [status, bookingId]
+    );
+    return updateResult.rows[0];
+  }
+  return null;
+};
+
+export default { createBooking, getAllBookings, updateBookingById };

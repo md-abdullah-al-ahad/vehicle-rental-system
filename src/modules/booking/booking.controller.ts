@@ -27,5 +27,27 @@ const getAllBookings = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-export { createBooking, getAllBookings };
+const updateBookingById = async (req: Request, res: Response) => {
+  const status = req.body.status;
+  const bookingId = req.params.bookingId;
+  const currentUser = req.user;
+  try {
+    const updatedBooking = await bookingService.updateBookingById(
+      bookingId as string,
+      status,
+      currentUser
+    );
+    if (!updatedBooking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Booking updated successfully",
+      data: updatedBooking,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+export { createBooking, getAllBookings, updateBookingById };
