@@ -10,9 +10,15 @@ const createUser = async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.error(err);
+    let userMessage = "Unable to register. Please try again later.";
+    if (err.message.includes("duplicate") || err.message.includes("unique")) {
+      userMessage = "An account with this email already exists.";
+    } else if (err.message.includes("null value")) {
+      userMessage = "Please fill in all required fields.";
+    }
     res.status(500).json({
       success: false,
-      message: "Failed to create user",
+      message: userMessage,
       errors: err.message || "Internal server error",
     });
   }
@@ -30,7 +36,7 @@ const loginUser = async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: "Login failed",
+      message: "Unable to log in. Please try again later.",
       errors: error.message || "Internal server error",
     });
   }

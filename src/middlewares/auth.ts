@@ -9,15 +9,15 @@ const auth = (...roles: string[]) => {
       if (!authHeader) {
         return res.status(401).json({
           success: false,
-          message: "Unauthorized: No token provided",
-          errors: "Unauthorized: No token provided",
+          message: "Authentication required. Please log in to continue.",
+          errors: "No authorization token provided in request headers",
         });
       }
       if (!authHeader.startsWith("Bearer ")) {
         return res.status(401).json({
           success: false,
-          message: "Unauthorized: Invalid token format",
-          errors: "Unauthorized: Invalid token format",
+          message: "Invalid authentication format. Please log in again.",
+          errors: "Authorization header must use Bearer token format",
         });
       }
       const token = authHeader.substring(7);
@@ -29,8 +29,8 @@ const auth = (...roles: string[]) => {
       if (roles.length && !roles.includes(req.user.role)) {
         return res.status(403).json({
           success: false,
-          message: "Forbidden: Access denied",
-          errors: "Forbidden: Access denied",
+          message: "You don't have permission to perform this action.",
+          errors: `Access denied. Required role(s): ${roles.join(", ")}. Your role: ${req.user.role}`,
         });
       }
       next();
@@ -38,20 +38,20 @@ const auth = (...roles: string[]) => {
       if (err.name === "JsonWebTokenError") {
         return res.status(401).json({
           success: false,
-          message: "Unauthorized: Invalid token",
-          errors: "Unauthorized: Invalid token",
+          message: "Your session is invalid. Please log in again.",
+          errors: "JWT verification failed: Invalid or malformed token",
         });
       }
       if (err.name === "TokenExpiredError") {
         return res.status(401).json({
           success: false,
-          message: "Unauthorized: Token expired",
-          errors: "Unauthorized: Token expired",
+          message: "Your session has expired. Please log in again.",
+          errors: "JWT token has expired",
         });
       }
       res.status(500).json({
         success: false,
-        message: "Internal server error",
+        message: "An unexpected error occurred during authentication.",
         errors: err.message || "Internal server error",
       });
     }

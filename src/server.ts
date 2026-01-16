@@ -16,6 +16,11 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/vehicles", vehicleRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/bookings", bookingRouter);
+
+app.get("/", (req: Request, res: Response) => {
+  res.send("Welcome to the CARKHUJI API");
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

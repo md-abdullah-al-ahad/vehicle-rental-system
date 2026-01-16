@@ -11,9 +11,19 @@ const createBooking = async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.error(err);
+    let userMessage = "Unable to create booking. Please try again later.";
+    if (err.message.includes("Vehicle not found")) {
+      userMessage = "The selected vehicle does not exist.";
+    } else if (err.message.includes("Customer not found")) {
+      userMessage = "Invalid customer. Please check your account.";
+    } else if (err.message.includes("not available")) {
+      userMessage = "This vehicle is currently not available for booking.";
+    } else if (err.message.includes("End date")) {
+      userMessage = "Invalid dates. End date must be after start date.";
+    }
     res.status(500).json({
       success: false,
-      message: "Failed to create booking",
+      message: userMessage,
       errors: err.message || "Internal server error",
     });
   }
@@ -36,7 +46,7 @@ const getAllBookings = async (req: Request, res: Response) => {
     console.error(err);
     res.status(500).json({
       success: false,
-      message: "Failed to retrieve bookings",
+      message: "Unable to fetch bookings. Please try again later.",
       errors: err.message || "Internal server error",
     });
   }
@@ -55,8 +65,8 @@ const updateBookingById = async (req: Request, res: Response) => {
     if (!updatedBooking) {
       return res.status(404).json({
         success: false,
-        message: "Booking not found",
-        errors: "Booking not found",
+        message: "The requested booking could not be found.",
+        errors: `No booking exists with ID: ${bookingId}`,
       });
     }
     let message = "Booking updated successfully";
@@ -72,9 +82,23 @@ const updateBookingById = async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.error(err);
-    res.status(500).json({
+    let userMessage = "Unable to update booking. Please try again later.";
+    if (err.message.includes("Unauthorized")) {
+      userMessage = "You don't have permission to update this booking.";
+    } else if (err.message.includes("only cancel")) {
+      userMessage = "You can only cancel your bookings, not modify them.";
+    } else if (err.message.includes("after start date")) {
+      userMessage = "Cannot cancel a booking that has already started.";
+    }
+    const statusCode =
+      err.message.includes("Unauthorized") ||
+      err.message.includes("only cancel") ||
+      err.message.includes("after start date")
+        ? 403
+        : 500;
+    res.status(statusCode).json({
       success: false,
-      message: "Failed to update booking",
+      message: userMessage,
       errors: err.message || "Internal server error",
     });
   }
