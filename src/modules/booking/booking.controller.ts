@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import pool, { Query } from "pg";
 import bookingService from "./booking.service";
+
 const createBooking = async (req: Request, res: Response) => {
   try {
     const bookingData = await bookingService.createBooking(req.body);
@@ -18,12 +18,18 @@ const createBooking = async (req: Request, res: Response) => {
     });
   }
 };
+
 const getAllBookings = async (req: Request, res: Response) => {
   try {
-    const bookings = await bookingService.getAllBookings();
+    const currentUser = req.user;
+    const bookings = await bookingService.getAllBookings(currentUser);
+    const message =
+      currentUser?.role === "admin"
+        ? "Bookings retrieved successfully"
+        : "Your bookings retrieved successfully";
     res.status(200).json({
       success: true,
-      message: "Bookings retrieved successfully",
+      message,
       data: bookings,
     });
   } catch (err: any) {
@@ -35,6 +41,7 @@ const getAllBookings = async (req: Request, res: Response) => {
     });
   }
 };
+
 const updateBookingById = async (req: Request, res: Response) => {
   const status = req.body.status;
   const bookingId = req.params.bookingId;
@@ -52,9 +59,15 @@ const updateBookingById = async (req: Request, res: Response) => {
         errors: "Booking not found",
       });
     }
+    let message = "Booking updated successfully";
+    if (status === "cancelled") {
+      message = "Booking cancelled successfully";
+    } else if (status === "returned") {
+      message = "Booking marked as returned. Vehicle is now available";
+    }
     res.status(200).json({
       success: true,
-      message: "Booking updated successfully",
+      message,
       data: updatedBooking,
     });
   } catch (err: any) {
@@ -66,4 +79,5 @@ const updateBookingById = async (req: Request, res: Response) => {
     });
   }
 };
+
 export { createBooking, getAllBookings, updateBookingById };

@@ -1,8 +1,9 @@
 import { pool } from "../../config/db";
-import jwt, { JwtPayload } from "jsonwebtoken";
-import config from "../../config";
+
 const getAllUsers = async () => {
-  const users = await pool.query("SELECT * FROM users");
+  const users = await pool.query(
+    "SELECT id, name, email, phone, role FROM users"
+  );
   return users.rows;
 };
 const updateUserById = async (
@@ -11,7 +12,7 @@ const updateUserById = async (
   currentUser: any
 ) => {
   if (currentUser.role === "customer") {
-    if (currentUser.userId.toString() !== userId) {
+    if (currentUser.id.toString() !== userId) {
       throw new Error("Unauthorized: You can only update your own profile");
     }
     delete updatedData.role;
@@ -51,11 +52,11 @@ const deleteUserById = async (userId: string) => {
     return null;
   }
   const bookings = await pool.query(
-    "SELECT * FROM bookings WHERE customer_id = $1",
+    "SELECT * FROM bookings WHERE customer_id = $1 AND status = 'active'",
     [userId]
   );
   if (bookings.rows.length > 0) {
-    throw new Error("Cannot delete user with existing bookings");
+    throw new Error("Cannot delete user with active bookings");
   }
   await pool.query("DELETE FROM users WHERE id = $1", [userId]);
   return true;
