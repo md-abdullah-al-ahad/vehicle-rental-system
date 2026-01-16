@@ -9,7 +9,7 @@ const addVehicle = async (payload: Record<string, unknown>) => {
     availability_status,
   } = payload;
   const result = await pool.query(
-    "INSERT INTO vehicles (vehicle_name, type, registration_number, daily_rent_price, availability_status) VALUES ($1, $2, $3, $4, $5) RETURNING id, vehicle_name, type, registration_number, daily_rent_price, availability_status",
+    "INSERT INTO vehicles (vehicle_name, type, registration_number, daily_rent_price, availability_status) VALUES ($1, $2, $3, $4, $5) RETURNING *",
     [
       vehicle_name,
       type,
@@ -26,7 +26,7 @@ const addVehicle = async (payload: Record<string, unknown>) => {
 };
 
 const getAllVehicles = async () => {
-  const result = await pool.query("SELECT * FROM vehicles RE");
+  const result = await pool.query("SELECT * FROM vehicles");
   return result.rows.map((vehicle) => ({
     ...vehicle,
     daily_rent_price: vehicle.daily_rent_price

@@ -8,9 +8,13 @@ const createUser = async (req: Request, res: Response) => {
       message: "User registered successfully",
       data: user,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to create user",
+      errors: err.message || "Internal server error",
+    });
   }
 };
 
@@ -26,7 +30,8 @@ const loginUser = async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Login failed",
+      errors: error.message || "Internal server error",
     });
   }
 };

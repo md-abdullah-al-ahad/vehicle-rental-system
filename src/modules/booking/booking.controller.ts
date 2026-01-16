@@ -9,9 +9,13 @@ const createBooking = async (req: Request, res: Response) => {
       message: "Booking created successfully",
       data: bookingData,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to create booking",
+      errors: err.message || "Internal server error",
+    });
   }
 };
 const getAllBookings = async (req: Request, res: Response) => {
@@ -22,9 +26,13 @@ const getAllBookings = async (req: Request, res: Response) => {
       message: "Bookings retrieved successfully",
       data: bookings,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve bookings",
+      errors: err.message || "Internal server error",
+    });
   }
 };
 const updateBookingById = async (req: Request, res: Response) => {
@@ -38,16 +46,24 @@ const updateBookingById = async (req: Request, res: Response) => {
       currentUser
     );
     if (!updatedBooking) {
-      return res.status(404).json({ error: "Booking not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+        errors: "Booking not found",
+      });
     }
     res.status(200).json({
       success: true,
       message: "Booking updated successfully",
       data: updatedBooking,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to update booking",
+      errors: err.message || "Internal server error",
+    });
   }
 };
 export { createBooking, getAllBookings, updateBookingById };

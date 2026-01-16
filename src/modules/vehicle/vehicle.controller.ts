@@ -8,9 +8,13 @@ const addVehicle = async (req: Request, res: Response) => {
       message: "Vehicle added successfully",
       data: vehicleData,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to add vehicle",
+      errors: err.message || "Internal server error",
+    });
   }
 };
 
@@ -22,9 +26,13 @@ const getAllVehicles = async (req: Request, res: Response) => {
       message: "Vehicles retrieved successfully",
       data: vehicles,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve vehicles",
+      errors: err.message || "Internal server error",
+    });
   }
 };
 
@@ -33,16 +41,24 @@ const getVehicleById = async (req: Request, res: Response) => {
     const vehicleId = req.params.vehicleId;
     const vehicle = await vehicleService.getVehicleById(vehicleId as string);
     if (!vehicle) {
-      return res.status(404).json({ error: "Vehicle not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Vehicle not found",
+        errors: "Vehicle not found",
+      });
     }
     res.status(200).json({
       success: true,
       message: "Vehicle retrieved successfully",
       data: vehicle,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve vehicle",
+      errors: err.message || "Internal server error",
+    });
   }
 };
 
@@ -54,16 +70,24 @@ const updateVehicleById = async (req: Request, res: Response) => {
       req.body
     );
     if (!updatedVehicle) {
-      return res.status(404).json({ error: "Vehicle not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Vehicle not found",
+        errors: "Vehicle not found",
+      });
     }
     res.status(200).json({
       success: true,
       message: "Vehicle updated successfully",
       data: updatedVehicle,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to update vehicle",
+      errors: err.message || "Internal server error",
+    });
   }
 };
 const deleteVehicleById = async (req: Request, res: Response) => {
@@ -73,15 +97,23 @@ const deleteVehicleById = async (req: Request, res: Response) => {
       vehicleId as string
     );
     if (!deletedVehicle) {
-      return res.status(404).json({ error: "Vehicle not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Vehicle not found",
+        errors: "Vehicle not found",
+      });
     }
     res.status(200).json({
       success: true,
       message: "Vehicle deleted successfully",
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete vehicle",
+      errors: err.message || "Internal server error",
+    });
   }
 };
 

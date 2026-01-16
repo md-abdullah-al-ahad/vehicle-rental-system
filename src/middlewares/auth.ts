@@ -10,12 +10,14 @@ const auth = (...roles: string[]) => {
         return res.status(401).json({
           success: false,
           message: "Unauthorized: No token provided",
+          errors: "Unauthorized: No token provided",
         });
       }
       if (!authHeader.startsWith("Bearer ")) {
         return res.status(401).json({
           success: false,
           message: "Unauthorized: Invalid token format",
+          errors: "Unauthorized: Invalid token format",
         });
       }
       const token = authHeader.substring(7);
@@ -28,6 +30,7 @@ const auth = (...roles: string[]) => {
         return res.status(403).json({
           success: false,
           message: "Forbidden: Access denied",
+          errors: "Forbidden: Access denied",
         });
       }
       next();
@@ -36,17 +39,20 @@ const auth = (...roles: string[]) => {
         return res.status(401).json({
           success: false,
           message: "Unauthorized: Invalid token",
+          errors: "Unauthorized: Invalid token",
         });
       }
       if (err.name === "TokenExpiredError") {
         return res.status(401).json({
           success: false,
           message: "Unauthorized: Token expired",
+          errors: "Unauthorized: Token expired",
         });
       }
       res.status(500).json({
         success: false,
-        message: err.message || "Internal server error",
+        message: "Internal server error",
+        errors: err.message || "Internal server error",
       });
     }
   };
