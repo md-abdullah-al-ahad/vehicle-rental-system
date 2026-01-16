@@ -46,4 +46,49 @@ const getVehicleById = async (req: Request, res: Response) => {
   }
 };
 
-export { addVehicle, getAllVehicles, getVehicleById };
+const updateVehicleById = async (req: Request, res: Response) => {
+  try {
+    const vehicleId = req.params.vehicleId;
+    const updatedVehicle = await vehicleService.updateVehicleById(
+      vehicleId as string,
+      req.body
+    );
+    if (!updatedVehicle) {
+      return res.status(404).json({ error: "Vehicle not found" });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Vehicle updated successfully",
+      data: updatedVehicle,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+const deleteVehicleById = async (req: Request, res: Response) => {
+  try {
+    const vehicleId = req.params.vehicleId;
+    const deletedVehicle = await vehicleService.deleteVehicleById(
+      vehicleId as string
+    );
+    if (!deletedVehicle) {
+      return res.status(404).json({ error: "Vehicle not found" });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Vehicle deleted successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export {
+  addVehicle,
+  getAllVehicles,
+  getVehicleById,
+  updateVehicleById,
+  deleteVehicleById,
+};
