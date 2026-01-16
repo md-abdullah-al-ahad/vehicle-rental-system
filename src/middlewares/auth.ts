@@ -1,23 +1,52 @@
 import { Request, Response, NextFunction } from "express";
 import config from "../config";
 import jwt, { JwtPayload } from "jsonwebtoken";
+
 const auth = (...roles: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const token = req.headers.authorization;
-      if (!token) {
-        return res.status(401).json({ message: "No token provided" });
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized: No token provided",
+        });
       }
-      const decoded = jwt.verify(token, config.JWT_SECRET as string);
-      req.user = decoded as JwtPayload;
+      if (!authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized: Invalid token format",
+        });
+      }
+      const token = authHeader.substring(7);
+      const decoded = jwt.verify(
+        token,
+        config.JWT_SECRET as string
+      ) as JwtPayload;
+      req.user = decoded;
       if (roles.length && !roles.includes(req.user.role)) {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({
+          success: false,
+          message: "Forbidden: Access denied",
+        });
       }
       next();
     } catch (err: any) {
+      if (err.name === "JsonWebTokenError") {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized: Invalid token",
+        });
+      }
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized: Token expired",
+        });
+      }
       res.status(500).json({
         success: false,
-        message: err.message,
+        message: err.message || "Internal server error",
       });
     }
   };

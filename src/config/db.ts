@@ -28,8 +28,6 @@ export const initDB = async () => {
       registration_number VARCHAR(80) NOT NULL UNIQUE,
       daily_rent_price NUMERIC(10,2) NOT NULL,
       availability_status VARCHAR(20) NOT NULL DEFAULT 'available',
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW(),
       CONSTRAINT vehicles_type_check CHECK (type IN ('car', 'bike', 'van', 'SUV')),
       CONSTRAINT vehicles_price_positive CHECK (daily_rent_price > 0),
       CONSTRAINT vehicles_status_check CHECK (availability_status IN ('available', 'booked'))
@@ -39,20 +37,12 @@ export const initDB = async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS bookings (
       id SERIAL PRIMARY KEY,
-
       customer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       vehicle_id INTEGER NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
-
       rent_start_date TIMESTAMP NOT NULL,
       rent_end_date TIMESTAMP NOT NULL,
-
       total_price NUMERIC(10,2) NOT NULL,
-
       status VARCHAR(20) NOT NULL DEFAULT 'active',
-
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW(),
-
       CONSTRAINT bookings_date_check CHECK (rent_end_date > rent_start_date),
       CONSTRAINT bookings_price_positive CHECK (total_price > 0),
       CONSTRAINT bookings_status_check CHECK (status IN ('active', 'cancelled', 'returned'))
