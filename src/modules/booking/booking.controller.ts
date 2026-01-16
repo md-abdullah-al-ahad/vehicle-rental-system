@@ -14,5 +14,18 @@ const createBooking = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+const getAllBookings = async (req: Request, res: Response) => {
+  try {
+    const bookings = await bookingService.getAllBookings();
+    res.status(200).json({
+      success: true,
+      message: "Bookings retrieved successfully",
+      data: bookings,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
-export { createBooking };
+export { createBooking, getAllBookings };

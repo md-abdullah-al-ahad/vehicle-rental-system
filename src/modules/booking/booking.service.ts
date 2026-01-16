@@ -41,4 +41,9 @@ const createBooking = async (bookingDetails: Record<string, unknown>) => {
   return bookingResult.rows[0];
 };
 
-export default { createBooking };
+const getAllBookings = async () => {
+  const bookings = await pool.query("SELECT * FROM bookings");
+  return bookings.rows;
+};
+
+export default { createBooking, getAllBookings };
