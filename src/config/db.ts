@@ -50,12 +50,15 @@ export const initDB = async () => {
   `);
 };
 
-initDB()
-  .then(() => {
-    console.log("DB Initialized");
-  })
-  .catch((err) => {
-    console.error("Error initializing DB", err);
-  });
+// Only initialize DB when not in test environment
+if (process.env.NODE_ENV !== "test") {
+  initDB()
+    .then(() => {
+      console.log("DB Initialized");
+    })
+    .catch((err) => {
+      console.error("Error initializing DB", err);
+    });
+}
 
 export default initDB;

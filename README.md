@@ -81,6 +81,26 @@ npm run dev
 
 The server will start at `http://localhost:5000`
 
+## 🧪 Testing
+
+This project includes comprehensive test coverage using Jest.
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode (auto-rerun on changes)
+npm run test:watch
+```
+
+**Test Coverage:**
+
+- ✅ Authentication service (user signup, login, password hashing)
+- ✅ Vehicle service (CRUD operations, business logic)
+- ✅ Auth middleware (JWT validation, role-based access)
+
+For detailed testing documentation, see [TESTING.md](TESTING.md)
+
 ## 📚 API Endpoints
 
 ### Authentication
