@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import config from "../config";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+import { AuthPayload } from "../types/interfaces";
 
 const auth = (...roles: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -21,10 +22,7 @@ const auth = (...roles: string[]) => {
         });
       }
       const token = authHeader.substring(7);
-      const decoded = jwt.verify(
-        token,
-        config.JWT_SECRET as string
-      ) as JwtPayload;
+      const decoded = jwt.verify(token, config.jwtSecret) as AuthPayload;
       req.user = decoded;
       if (roles.length && !roles.includes(req.user.role)) {
         return res.status(403).json({
@@ -34,15 +32,16 @@ const auth = (...roles: string[]) => {
         });
       }
       next();
-    } catch (err: any) {
-      if (err.name === "JsonWebTokenError") {
+    } catch (err: unknown) {
+      const error = err as Error & { name: string };
+      if (error.name === "JsonWebTokenError") {
         return res.status(401).json({
           success: false,
           message: "Your session is invalid. Please log in again.",
           errors: "JWT verification failed: Invalid or malformed token",
         });
       }
-      if (err.name === "TokenExpiredError") {
+      if (error.name === "TokenExpiredError") {
         return res.status(401).json({
           success: false,
           message: "Your session has expired. Please log in again.",
@@ -52,7 +51,6 @@ const auth = (...roles: string[]) => {
       res.status(500).json({
         success: false,
         message: "An unexpected error occurred during authentication.",
-        errors: err.message || "Internal server error",
       });
     }
   };

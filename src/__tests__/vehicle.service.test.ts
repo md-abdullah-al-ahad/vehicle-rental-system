@@ -9,7 +9,7 @@ describe("Vehicle Service", () => {
   });
 
   describe("getAllVehicles", () => {
-    it("should return all vehicles", async () => {
+    it("should return all vehicles with pagination", async () => {
       // Arrange
       const mockVehicles = [
         {
@@ -30,31 +30,33 @@ describe("Vehicle Service", () => {
         },
       ];
 
-      (pool.query as jest.Mock).mockResolvedValue({
-        rows: mockVehicles,
-      });
+      (pool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ count: "2" }] })
+        .mockResolvedValueOnce({ rows: mockVehicles });
 
       // Act
       const result = await vehicleService.getAllVehicles();
 
       // Assert
-      expect(pool.query).toHaveBeenCalledWith("SELECT * FROM vehicles");
-      expect(result).toHaveLength(2);
-      expect(result[0].daily_rent_price).toBe(50.0); // Should be parsed to number
-      expect(result[1].daily_rent_price).toBe(45.0);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]!.daily_rent_price).toBe(50.0);
+      expect(result.data[1]!.daily_rent_price).toBe(45.0);
+      expect(result.pagination.total).toBe(2);
+      expect(result.pagination.page).toBe(1);
     });
 
     it("should return empty array when no vehicles exist", async () => {
       // Arrange
-      (pool.query as jest.Mock).mockResolvedValue({
-        rows: [],
-      });
+      (pool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [{ count: "0" }] })
+        .mockResolvedValueOnce({ rows: [] });
 
       // Act
       const result = await vehicleService.getAllVehicles();
 
       // Assert
-      expect(result).toEqual([]);
+      expect(result.data).toEqual([]);
+      expect(result.pagination.total).toBe(0);
     });
   });
 
@@ -82,8 +84,8 @@ describe("Vehicle Service", () => {
         "SELECT * FROM vehicles WHERE id = $1",
         ["1"],
       );
-      expect(result.id).toBe(1);
-      expect(result.daily_rent_price).toBe(50.0);
+      expect(result!.id).toBe(1);
+      expect(result!.daily_rent_price).toBe(50.0);
     });
 
     it("should return undefined when vehicle not found", async () => {
@@ -96,7 +98,7 @@ describe("Vehicle Service", () => {
       const result = await vehicleService.getVehicleById("999");
 
       // Assert
-      expect(result).toBeUndefined();
+      expect(result).toBeNull();
     });
   });
 

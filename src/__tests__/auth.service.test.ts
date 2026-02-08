@@ -111,7 +111,7 @@ describe("Auth Service", () => {
 
       // Assert
       expect(pool.query).toHaveBeenCalledWith(
-        "SELECT * FROM users WHERE email = $1",
+        "SELECT id, name, email, password, phone, role FROM users WHERE email = $1",
         [email],
       );
       expect(bcrypt.compare).toHaveBeenCalledWith(password, "hashed_password");

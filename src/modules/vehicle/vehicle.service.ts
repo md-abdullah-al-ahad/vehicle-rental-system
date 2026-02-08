@@ -1,6 +1,14 @@
 import { pool } from "../../config/db";
+import { AppError } from "../../utils/AppError";
+import { Vehicle, PaginatedResponse } from "../../types/interfaces";
 
-const addVehicle = async (payload: Record<string, unknown>) => {
+const addVehicle = async (payload: {
+  vehicle_name: string;
+  type: string;
+  registration_number: string;
+  daily_rent_price: number;
+  availability_status?: string;
+}): Promise<Vehicle> => {
   const {
     vehicle_name,
     type,
@@ -15,27 +23,49 @@ const addVehicle = async (payload: Record<string, unknown>) => {
       type,
       registration_number,
       daily_rent_price,
-      availability_status,
-    ]
+      availability_status || "available",
+    ],
   );
   const vehicle = result.rows[0];
   if (vehicle.daily_rent_price) {
     vehicle.daily_rent_price = parseFloat(vehicle.daily_rent_price);
   }
-  return vehicle;
+  return vehicle as Vehicle;
 };
 
-const getAllVehicles = async () => {
-  const result = await pool.query("SELECT * FROM vehicles");
-  return result.rows.map((vehicle) => ({
+const getAllVehicles = async (
+  page = 1,
+  limit = 10,
+): Promise<PaginatedResponse<Vehicle>> => {
+  const offset = (page - 1) * limit;
+
+  const countResult = await pool.query("SELECT COUNT(*) FROM vehicles");
+  const total = parseInt(countResult.rows[0].count, 10);
+
+  const result = await pool.query(
+    "SELECT * FROM vehicles ORDER BY id LIMIT $1 OFFSET $2",
+    [limit, offset],
+  );
+
+  const data = result.rows.map((vehicle) => ({
     ...vehicle,
     daily_rent_price: vehicle.daily_rent_price
       ? parseFloat(vehicle.daily_rent_price)
       : vehicle.daily_rent_price,
   }));
+
+  return {
+    data,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
-const getVehicleById = async (vehicleId: string) => {
+const getVehicleById = async (vehicleId: string): Promise<Vehicle | null> => {
   const result = await pool.query("SELECT * FROM vehicles WHERE id = $1", [
     vehicleId,
   ]);
@@ -43,12 +73,12 @@ const getVehicleById = async (vehicleId: string) => {
   if (vehicle && vehicle.daily_rent_price) {
     vehicle.daily_rent_price = parseFloat(vehicle.daily_rent_price);
   }
-  return vehicle;
+  return (vehicle as Vehicle) || null;
 };
 const updateVehicleById = async (
   vehicleId: string,
-  updatedData: Record<string, unknown>
-) => {
+  updatedData: Record<string, unknown>,
+): Promise<Vehicle | null> => {
   const allowedFields = [
     "vehicle_name",
     "type",
@@ -58,8 +88,12 @@ const updateVehicleById = async (
   ];
 
   const fieldsToUpdate = Object.keys(updatedData).filter(
-    (key) => allowedFields.includes(key) && updatedData[key] !== undefined
+    (key) => allowedFields.includes(key) && updatedData[key] !== undefined,
   );
+
+  if (fieldsToUpdate.length === 0) {
+    throw new AppError("No valid fields provided for update", 400);
+  }
 
   const setClause = fieldsToUpdate
     .map((field, index) => `${field} = $${index + 1}`)
@@ -75,10 +109,12 @@ const updateVehicleById = async (
   if (vehicle && vehicle.daily_rent_price) {
     vehicle.daily_rent_price = parseFloat(vehicle.daily_rent_price);
   }
-  return vehicle;
+  return (vehicle as Vehicle) || null;
 };
 
-const deleteVehicleById = async (vehicleId: string) => {
+const deleteVehicleById = async (
+  vehicleId: string,
+): Promise<Vehicle | null> => {
   const result = await pool.query("SELECT * FROM vehicles WHERE id = $1", [
     vehicleId,
   ]);
@@ -88,14 +124,17 @@ const deleteVehicleById = async (vehicleId: string) => {
   }
 
   const activeBookings = await pool.query(
-    "SELECT * FROM bookings WHERE vehicle_id = $1 AND status = 'active'",
-    [vehicleId]
+    "SELECT id FROM bookings WHERE vehicle_id = $1 AND status = 'active'",
+    [vehicleId],
   );
   if (activeBookings.rows.length > 0) {
-    throw new Error("Cannot delete vehicle with active bookings");
+    throw new AppError(
+      "Cannot delete vehicle with active bookings. Cancel or return them first.",
+      409,
+    );
   }
   await pool.query("DELETE FROM vehicles WHERE id = $1", [vehicleId]);
-  return result.rows[0];
+  return result.rows[0] as Vehicle;
 };
 
 export default {

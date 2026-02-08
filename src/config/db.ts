@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import config from "./index";
+import logger from "../utils/logger";
 
 export const pool = new Pool({
   connectionString: config.connectionString,
@@ -54,10 +55,10 @@ export const initDB = async () => {
 if (process.env.NODE_ENV !== "test") {
   initDB()
     .then(() => {
-      console.log("DB Initialized");
+      logger.info("Database tables initialized successfully");
     })
     .catch((err) => {
-      console.error("Error initializing DB", err);
+      logger.error("Failed to initialize database", err);
     });
 }
 

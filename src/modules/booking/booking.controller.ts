@@ -1,106 +1,79 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import bookingService from "./booking.service";
+import { AppError } from "../../utils/AppError";
 
-const createBooking = async (req: Request, res: Response) => {
+const createBooking = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const bookingData = await bookingService.createBooking(req.body);
+    // Use authenticated user's ID — prevents impersonation
+    const bookingData = await bookingService.createBooking({
+      ...req.body,
+      customer_id: req.user!.id,
+    });
     res.status(201).json({
       success: true,
       message: "Booking created successfully",
       data: bookingData,
     });
-  } catch (err: any) {
-    console.error(err);
-    let userMessage = "Unable to create booking. Please try again later.";
-    if (err.message.includes("Vehicle not found")) {
-      userMessage = "The selected vehicle does not exist.";
-    } else if (err.message.includes("Customer not found")) {
-      userMessage = "Invalid customer. Please check your account.";
-    } else if (err.message.includes("not available")) {
-      userMessage = "This vehicle is currently not available for booking.";
-    } else if (err.message.includes("End date")) {
-      userMessage = "Invalid dates. End date must be after start date.";
-    }
-    res.status(500).json({
-      success: false,
-      message: userMessage,
-      errors: err.message || "Internal server error",
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-const getAllBookings = async (req: Request, res: Response) => {
+const getAllBookings = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
-    const currentUser = req.user;
-    const bookings = await bookingService.getAllBookings(currentUser);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = Math.min(parseInt(req.query.limit as string) || 10, 100);
+    const result = await bookingService.getAllBookings(req.user!, page, limit);
     const message =
-      currentUser?.role === "admin"
+      req.user?.role === "admin"
         ? "Bookings retrieved successfully"
         : "Your bookings retrieved successfully";
     res.status(200).json({
       success: true,
       message,
-      data: bookings,
+      data: result.data,
+      pagination: result.pagination,
     });
-  } catch (err: any) {
-    console.error(err);
-    res.status(500).json({
-      success: false,
-      message: "Unable to fetch bookings. Please try again later.",
-      errors: err.message || "Internal server error",
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-const updateBookingById = async (req: Request, res: Response) => {
-  const status = req.body.status;
-  const bookingId = req.params.bookingId;
-  const currentUser = req.user;
+const updateBookingById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
+    const { status } = req.body;
+    const bookingId = req.params.bookingId as string;
     const updatedBooking = await bookingService.updateBookingById(
-      bookingId as string,
+      bookingId,
       status,
-      currentUser
+      req.user!,
     );
     if (!updatedBooking) {
-      return res.status(404).json({
-        success: false,
-        message: "The requested booking could not be found.",
-        errors: `No booking exists with ID: ${bookingId}`,
-      });
+      throw new AppError("Booking not found", 404);
     }
     let message = "Booking updated successfully";
-    if (status === "cancelled") {
-      message = "Booking cancelled successfully";
-    } else if (status === "returned") {
+    if (status === "cancelled") message = "Booking cancelled successfully";
+    else if (status === "returned")
       message = "Booking marked as returned. Vehicle is now available";
-    }
     res.status(200).json({
       success: true,
       message,
       data: updatedBooking,
     });
-  } catch (err: any) {
-    console.error(err);
-    let userMessage = "Unable to update booking. Please try again later.";
-    if (err.message.includes("Unauthorized")) {
-      userMessage = "You don't have permission to update this booking.";
-    } else if (err.message.includes("only cancel")) {
-      userMessage = "You can only cancel your bookings, not modify them.";
-    } else if (err.message.includes("after start date")) {
-      userMessage = "Cannot cancel a booking that has already started.";
-    }
-    const statusCode =
-      err.message.includes("Unauthorized") ||
-      err.message.includes("only cancel") ||
-      err.message.includes("after start date")
-        ? 403
-        : 500;
-    res.status(statusCode).json({
-      success: false,
-      message: userMessage,
-      errors: err.message || "Internal server error",
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
