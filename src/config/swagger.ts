@@ -1,5 +1,4 @@
-import swaggerUi from "swagger-ui-express";
-import { Express } from "express";
+import { Express, Request, Response } from "express";
 
 const swaggerSpec = {
   openapi: "3.0.0",
@@ -584,12 +583,33 @@ const swaggerSpec = {
 };
 
 export const setupSwagger = (app: Express) => {
-  app.use(
-    "/api-docs",
-    swaggerUi.serve,
-    swaggerUi.setup(swaggerSpec, {
-      customSiteTitle: "Vehicle Rental API Docs",
-      customCss: ".swagger-ui .topbar { display: none }",
-    }),
-  );
+  // Serve spec as JSON for programmatic access
+  app.get("/api-docs/swagger.json", (_req: Request, res: Response) => {
+    res.json(swaggerSpec);
+  });
+
+  // Serve Swagger UI as a self-contained HTML page using CDN assets
+  app.get("/api-docs", (_req: Request, res: Response) => {
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vehicle Rental API Docs</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui.min.css" />
+  <style>body { margin: 0; } .swagger-ui .topbar { display: none; }</style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui-bundle.min.js"></script>
+  <script>
+    SwaggerUIBundle({
+      url: '/api-docs/swagger.json',
+      dom_id: '#swagger-ui',
+      presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+      layout: 'BaseLayout',
+    });
+  </script>
+</body>
+</html>`);
+  });
 };

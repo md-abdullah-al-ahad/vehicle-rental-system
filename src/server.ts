@@ -16,7 +16,23 @@ const app = express();
 const PORT = config.port;
 
 // ── Security Middleware ──────────────────────────────────────────────
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://cdnjs.cloudflare.com",
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+        imgSrc: ["'self'", "data:", "https://cdnjs.cloudflare.com"],
+        connectSrc: ["'self'"],
+      },
+    },
+  }),
+);
 app.use(cors());
 app.use(express.json({ limit: "10kb" }));
 app.use(apiLimiter);
